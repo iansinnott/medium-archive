@@ -1,17 +1,8 @@
 (ns medium-archive.core
   (:gen-class)
   (:require [clojure.string :as s]
-            [clojure.java.io :as io]
-            )
+            [clojure.xml :as xml])
   (:import [org.jsoup Jsoup]))
-
-(.toUpperCase "hey")
-
-(def tag-rules {:head (fn [] "")
-                :title (comp first :children)
-                :p (partial reduce str)
-                :li #(str "* " (first (:children %)))
-                })
 
 (def html-test-str "
 <!doctype html>
@@ -32,17 +23,11 @@
 </html>
 ")
 
-(defn tokenize [html-str]
-  (-> html-str
-      (s/split #"\s+")
-      ))
-
 (def example-doc (Jsoup/parse html-test-str))
 (def medium-doc (Jsoup/parse (slurp "tmp-outfile.html")))
 (-> example-doc
     (.select "p")
-    ;; (->> (map #(.text %)))
-    (->> (map .text)))
+    (->> (map #(.text %))))
 
 (-> example-doc
     (.select "body")
@@ -62,19 +47,14 @@
                            (.nodeName node)))))))
 
 (def coll (.select example-doc "p"))
-(map .text coll) ;; Unable to resolve symbol...
 (map #(.text %) coll) ;; Works!
-(map (memfn text) coll) ;; Works!
 
 (comment
-  (tokenize html-test-str)
-  (.parse Jsoup "<a href='nakkaya.com'/>")
-  (xml/parse (java.io.ByteArrayInputStream. (.getBytes html-test-str)))
-  )
+  (Jsoup/parse "<a href='nakkaya.com'/>")
 
+  ;; This is expected to throw
+  (xml/parse (java.io.ByteArrayInputStream. (.getBytes html-test-str))))
 
-(defn html->md [src]
-  )
 
 (defn save-url-to-file [url outfile]
   (let [contents (slurp url)]
